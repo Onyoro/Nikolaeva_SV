@@ -67,6 +67,11 @@ class Note(db.Model):
 init_db()
 
 # Роуты для заметок
+@app.route('/')
+def index():
+    """Главная страница с описанием API."""
+    return render_template('index.html')
+
 @app.route('/api/notes', methods=['GET'])
 def get_notes():
     """Получение всех заметок с пагинацией и фильтрацией"""
