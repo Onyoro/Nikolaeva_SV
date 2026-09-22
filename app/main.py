@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime
 import os
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -13,6 +14,22 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+def init_db():
+    """Создаёт таблицы с несколькими попытками (для Render)."""
+    max_retries = 5
+    for attempt in range(max_retries):
+        try:
+            with app.app_context():
+                db.create_all()
+            print("Таблицы созданы")
+            return
+        except Exception as e:
+            print(f"Попытка {attempt + 1}/{max_retries} не удалась: {e}")
+            time.sleep(3)
+    print("Не удалось создать таблицы")
+
+init_db()
 
 # Модели данных
 class Category(db.Model):
@@ -46,9 +63,8 @@ class Note(db.Model):
             'category_id': self.category_id
         }
 
-# Создание таблиц
-with app.app_context():
-    db.create_all()
+# Вызываем функцию инициализации при запуске
+init_db()
 
 # Роуты для заметок
 @app.route('/api/notes', methods=['GET'])
