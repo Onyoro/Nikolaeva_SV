@@ -2,41 +2,382 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Notes API — Учебная практика</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes API — Управление заметками</title>
     <style>
-        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
-        h1 { color: #333; }
-        .endpoint { background: #fff; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #4CAF50; }
-        code { background: #eee; padding: 2px 6px; border-radius: 4px; }
-        a { color: #4CAF50; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e1e;
+            color: #e0e0e0;
+            padding: 20px;
+            line-height: 1.5;
+        }
+        
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        header {
+            padding-bottom: 16px;
+            border-bottom: 1px solid #333;
+            margin-bottom: 24px;
+        }
+        header h1 { font-size: 22px; margin-bottom: 4px; }
+        header p { color: #888; font-size: 13px; }
+
+        .card {
+            background: #252526;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card h2 {
+            font-size: 15px;
+            margin-bottom: 14px;
+            color: #fff;
+        }
+
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input, textarea, select {
+            padding: 10px 12px;
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            color: #e0e0e0;
+        }
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+        textarea { resize: vertical; min-height: 80px; }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: #4a9eff;
+            color: white;
+        }
+        .btn-primary:hover { background: #3a8eef; }
+        .btn-secondary {
+            background: #3a3a3a;
+            color: #e0e0e0;
+        }
+        .btn-secondary:hover { background: #4a4a4a; }
+        .btn-danger {
+            background: #d9534f;
+            color: white;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-danger:hover { background: #c9302c; }
+        .btn-edit {
+            background: #3a3a3a;
+            color: #e0e0e0;
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+        .btn-edit:hover { background: #4a4a4a; }
+
+        .note {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+        .note h3 { font-size: 15px; margin-bottom: 6px; color: #fff; }
+        .note p { font-size: 14px; color: #b0b0b0; margin-bottom: 10px; white-space: pre-wrap; }
+        .note-meta {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 10px;
+        }
+        .note-actions { display: flex; gap: 6px; }
+
+        .empty {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status {
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            display: none;
+        }
+        .status.success { background: #1e3a1e; color: #7fd97f; display: block; }
+        .status.error { background: #3a1e1e; color: #ff8080; display: block; }
+
+        .category-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .category-tag {
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 14px;
+            padding: 4px 12px;
+            font-size: 12px;
+            color: #b0b0b0;
+        }
+
+        .endpoints {
+            font-size: 13px;
+            color: #888;
+        }
+        .endpoints div {
+            padding: 4px 0;
+            border-bottom: 1px solid #2a2a2a;
+        }
+        .endpoints div:last-child { border-bottom: none; }
+        .endpoints code {
+            background: #1e1e1e;
+            color: #4a9eff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+            font-size: 12px;
+        }
+
+        .row {
+            display: flex;
+            gap: 10px;
+        }
+        .row > * { flex: 1; }
     </style>
 </head>
 <body>
-    <h1>Notes API</h1>
-    <p>Учебная практика — сервис управления заметками.</p>
-    
-    <h2>Доступные эндпоинты:</h2>
-    <div class="endpoint">
-        <strong>GET <code>/api/notes</code></strong> — получить все заметки
+    <div class="container">
+        <header>
+            <h1>📝 Notes API</h1>
+            <p>Учебная практика — сервис управления заметками</p>
+        </header>
+
+        <div id="status" class="status"></div>
+
+        <!-- Создание заметки -->
+        <div class="card">
+            <h2>Создать заметку</h2>
+            <form id="create-form">
+                <input type="text" id="title" placeholder="Заголовок" required>
+                <textarea id="content" placeholder="Текст заметки" required></textarea>
+                <div class="row">
+                    <select id="category">
+                        <option value="">Без категории</option>
+                    </select>
+                    <button type="submit" class="btn-primary">Создать</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Создание категории -->
+        <div class="card">
+            <h2>Категории</h2>
+            <form id="category-form">
+                <div class="row">
+                    <input type="text" id="category-name" placeholder="Название категории" required>
+                    <input type="text" id="category-description" placeholder="Описание (необязательно)">
+                    <button type="submit" class="btn-secondary">Добавить</button>
+                </div>
+            </form>
+            <div class="category-list" id="category-list"></div>
+        </div>
+
+        <!-- Список заметок -->
+        <div class="card">
+            <h2>Мои заметки (<span id="count">0</span>)</h2>
+            <div id="notes-list">
+                <div class="empty">Загрузка...</div>
+            </div>
+        </div>
+
+        <!-- Эндпоинты -->
+        <div class="card">
+            <h2>API эндпоинты</h2>
+            <div class="endpoints">
+                <div><code>GET</code> /api/notes — все заметки</div>
+                <div><code>POST</code> /api/notes — создать</div>
+                <div><code>GET</code> /api/notes/&lt;id&gt; — одна</div>
+                <div><code>PUT</code> /api/notes/&lt;id&gt; — обновить</div>
+                <div><code>DELETE</code> /api/notes/&lt;id&gt; — удалить</div>
+                <div><code>GET</code> /api/categories — категории</div>
+                <div><code>POST</code> /api/categories — создать категорию</div>
+            </div>
+        </div>
     </div>
-    <div class="endpoint">
-        <strong>POST <code>/api/notes</code></strong> — создать заметку
-    </div>
-    <div class="endpoint">
-        <strong>GET <code>/api/notes/&lt;id&gt;</code></strong> — получить заметку по ID
-    </div>
-    <div class="endpoint">
-        <strong>PUT <code>/api/notes/&lt;id&gt;</code></strong> — обновить заметку
-    </div>
-    <div class="endpoint">
-        <strong>DELETE <code>/api/notes/&lt;id&gt;</code></strong> — удалить заметку
-    </div>
-    <div class="endpoint">
-        <strong>GET <code>/api/categories</code></strong> — получить категории
-    </div>
-    
-    <p>
-        <a href="/api/notes">👉 Посмотреть все заметки (JSON)</a>
-    </p>
+
+    <script>
+        const API_URL = '/api';
+
+        function showStatus(message, type = 'success') {
+            const el = document.getElementById('status');
+            el.textContent = message;
+            el.className = 'status ' + type;
+            setTimeout(() => { el.className = 'status'; }, 3000);
+        }
+
+        // Загрузка заметок
+        async function loadNotes() {
+            try {
+                const res = await fetch(`${API_URL}/notes`);
+                const data = await res.json();
+                renderNotes(data.items);
+                document.getElementById('count').textContent = data.total;
+            } catch (e) {
+                showStatus('Ошибка загрузки: ' + e.message, 'error');
+            }
+        }
+
+        function renderNotes(notes) {
+            const list = document.getElementById('notes-list');
+            if (!notes || notes.length === 0) {
+                list.innerHTML = '<div class="empty">Заметок пока нет</div>';
+                return;
+            }
+            list.innerHTML = notes.map(note => `
+                <div class="note">
+                    <h3>${escapeHtml(note.title)}</h3>
+                    <p>${escapeHtml(note.content)}</p>
+                    <div class="note-meta">
+                        ${note.category ? 'Категория: ' + escapeHtml(note.category) + ' | ' : ''}
+                        ${new Date(note.created_at).toLocaleString('ru-RU')}
+                    </div>
+                    <div class="note-actions">
+                        <button class="btn-edit" onclick="editNote(${note.id}, '${escapeJs(note.title)}', '${escapeJs(note.content)}')">Изменить</button>
+                        <button class="btn-danger" onclick="deleteNote(${note.id})">Удалить</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Загрузка категорий
+        async function loadCategories() {
+            try {
+                const res = await fetch(`${API_URL}/categories`);
+                const categories = await res.json();
+
+                // Заполняем select
+                const select = document.getElementById('category');
+                select.innerHTML = '<option value="">Без категории</option>' +
+                    categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+                // Показываем список категорий
+                const list = document.getElementById('category-list');
+                if (categories.length === 0) {
+                    list.innerHTML = '<span style="color:#666;font-size:13px;">Категорий пока нет</span>';
+                } else {
+                    list.innerHTML = categories.map(c => 
+                        `<span class="category-tag">${escapeHtml(c.name)} (${c.notes_count})</span>`
+                    ).join('');
+                }
+            } catch (e) {
+                console.error('Ошибка загрузки категорий:', e);
+            }
+        }
+
+        // Создание заметки
+        document.getElementById('create-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('title').value;
+            const content = document.getElementById('content').value;
+            const categoryId = document.getElementById('category').value;
+
+            const body = { title, content };
+            if (categoryId) body.category_id = parseInt(categoryId);
+
+            try {
+                const res = await fetch(`${API_URL}/notes`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error('Ошибка создания');
+                showStatus('Заметка создана');
+                document.getElementById('create-form').reset();
+                loadNotes();
+            } catch (e) {
+                showStatus('Ошибка: ' + e.message, 'error');
+            }
+        });
+
+        // Создание категории
+        document.getElementById('category-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('category-name').value;
+            const description = document.getElementById('category-description').value;
+
+            try {
+                const res = await fetch(`${API_URL}/categories`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, description })
+                });
+                if (!res.ok) throw new Error('Ошибка создания категории');
+                showStatus('Категория добавлена');
+                document.getElementById('category-form').reset();
+                loadCategories();
+            } catch (e) {
+                showStatus('Ошибка: ' + e.message, 'error');
+            }
+        });
+
+        async function deleteNote(id) {
+            if (!confirm('Удалить заметку?')) return;
+            try {
+                const res = await fetch(`${API_URL}/notes/${id}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Ошибка удаления');
+                showStatus('Заметка удалена');
+                loadNotes();
+            } catch (e) {
+                showStatus('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        async function editNote(id, oldTitle, oldContent) {
+            const title = prompt('Новый заголовок:', oldTitle);
+            if (title === null) return;
+            const content = prompt('Новый текст:', oldContent);
+            if (content === null) return;
+
+            try {
+                const res = await fetch(`${API_URL}/notes/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, content })
+                });
+                if (!res.ok) throw new Error('Ошибка обновления');
+                showStatus('Заметка обновлена');
+                loadNotes();
+            } catch (e) {
+                showStatus('Ошибка: ' + e.message, 'error');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function escapeJs(text) {
+            return text.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+        }
+
+        loadNotes();
+        loadCategories();
+    </script>
 </body>
 </html>
