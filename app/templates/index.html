@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Notes API — Учебная практика</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 50px auto; padding: 20px; background: #f5f5f5; }
+        h1 { color: #333; }
+        .endpoint { background: #fff; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 4px solid #4CAF50; }
+        code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+        a { color: #4CAF50; }
+    </style>
+</head>
+<body>
+    <h1>Notes API</h1>
+    <p>Учебная практика — сервис управления заметками.</p>
+    
+    <h2>Доступные эндпоинты:</h2>
+    <div class="endpoint">
+        <strong>GET <code>/api/notes</code></strong> — получить все заметки
+    </div>
+    <div class="endpoint">
+        <strong>POST <code>/api/notes</code></strong> — создать заметку
+    </div>
+    <div class="endpoint">
+        <strong>GET <code>/api/notes/&lt;id&gt;</code></strong> — получить заметку по ID
+    </div>
+    <div class="endpoint">
+        <strong>PUT <code>/api/notes/&lt;id&gt;</code></strong> — обновить заметку
+    </div>
+    <div class="endpoint">
+        <strong>DELETE <code>/api/notes/&lt;id&gt;</code></strong> — удалить заметку
+    </div>
+    <div class="endpoint">
+        <strong>GET <code>/api/categories</code></strong> — получить категории
+    </div>
+    
+    <p>
+        <a href="/api/notes">👉 Посмотреть все заметки (JSON)</a>
+    </p>
+</body>
+</html>
